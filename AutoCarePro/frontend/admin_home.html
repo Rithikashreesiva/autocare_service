@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Home</title>
+    <style>
+        /* General Body Styles */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            background-image: url('images/admin.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+    
+        /* Navbar Styles */
+        .navbar {
+            background-color: #007bff;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+    
+        .navbar h1 {
+            margin: 0;
+            font-size: 20px;
+        }
+    
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+    
+        .navbar a:hover {
+            text-decoration: underline;
+        }
+    
+        /* Container Styles */
+        .container {
+            padding: 20px;
+            background-color:  rgba(255, 255, 255, 0.8);
+            
+        }
+    
+        /* Section Title */
+        h1 {
+            text-align: center;
+            color: #007bff;
+        }
+    
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background-color: rgb(245, 244, 244);
+        }
+    
+        table th, table td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+    
+        /* Button Styles */
+        .btn {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    
+        .btn:hover {
+            background-color: #0056b3;
+        }
+    
+        /* Dropdown and Filter Styles */
+        select {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+    
+        .filter {
+            margin-bottom: 20px;
+            text-align: right;
+        }
+    
+        .filter select {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    
+        /* Pagination Styles */
+        .pagination {
+            text-align: center;
+            margin-top: 20px;
+        }
+    
+        .pagination button {
+            margin: 0 5px;
+            padding: 10px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+    
+        .pagination button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+    
+</head>
+<body>
+    <div class="navbar">
+        <h1>Admin Home</h1>
+        <div>
+            <a href="#" onclick="showSection('booking')">Booking Slots</a>
+            <a href="#" onclick="showSection('users')">User List</a>
+        </div>
+    </div>
+
+    <div class="container" id="booking-section">
+        <h1>Booking Slots</h1>
+        <div class="filter">
+            <label for="status-filter">Filter by Status:</label>
+            <select id="status-filter" onchange="filterBookings()">
+                <option value="all">All</option>
+                <option value="Pending">Pending</option>
+                <option value="Completed">Completed</option>
+            </select>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Booking ID</th>
+                    <th>User</th>
+                    <th>Service</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="admin-bookings">
+                <!-- Booking details dynamically populated -->
+            </tbody>
+        </table>
+        <div class="pagination" id="pagination">
+            <!-- Pagination buttons dynamically populated -->
+        </div>
+    </div>
+
+    <div class="container" id="user-section" style="display: none;">
+        <h1>User List</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                </tr>
+            </thead>
+            <tbody id="user-list">
+                <!-- User details dynamically populated -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+      
+
+        const users = [
+            { id: 1, name: "John Doe", email: "john@example.com" },
+            { id: 2, name: "Jane Smith", email: "jane@example.com" }
+        ];
+
+        const bookingTable = document.getElementById('admin-bookings');
+        const userTable = document.getElementById('user-list');
+        const pagination = document.getElementById('pagination');
+
+        const ITEMS_PER_PAGE = 10;
+        let currentPage = 1; 
+        let currentFilter = "all";
+let myBookings = []
+const BASE_URL = 'http://localhost:5000/api'
+        async function fetchBookings() {
+            try {
+                const response = await fetch(`${BASE_URL}/bookings`);
+                if (response.ok) {
+                    const bookings = await response.json();
+                    myBookings = bookings
+                    renderBookings();
+                } else {
+                    alert('Failed to fetch bookings.');
+                }
+            } catch (err) {
+                console.error('Error fetching bookings:', err);
+            }
+        }
+
+        function renderBookings() {
+            const start = (currentPage - 1) * ITEMS_PER_PAGE;
+            const end = start + ITEMS_PER_PAGE;
+            const filteredBookings = myBookings.filter(booking => 
+                currentFilter === "all" || booking.status === currentFilter
+            );
+            const currentBookings = filteredBookings.sort((a, b) => a.time.localeCompare(b.time)).slice(start, end);
+
+            bookingTable.innerHTML = currentBookings.map(booking => `
+                <tr>
+                    <td>${booking._id}</td>
+                    <td>${booking.user.name}</td>
+                    <td>${booking.service}</td>
+                    <td>${booking.date}</td>
+                    <td>${booking.time}</td>
+                    <td>
+                        <select onchange="changeStatus(${booking._id}, this.value)">
+                            <option value="Pending" ${booking.status === "Pending" ? "selected" : ""}>Pending</option>
+                            <option value="Completed" ${booking.status === "Completed" ? "selected" : ""}>Completed</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button class="btn" onclick="deleteBooking(${booking._id})">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            renderPagination(filteredBookings.length);
+        }
+
+        function renderPagination(totalItems) {
+            const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+            pagination.innerHTML = '';
+            for (let i = 1; i <= totalPages; i++) {
+                pagination.innerHTML += `<button onclick="changePage(${i})">${i}</button>`;
+            }
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            renderBookings();
+        }
+
+        function changeStatus(id, status) {
+            const booking = bookings.find(b => b.id === id);
+            booking.status = status;
+        }
+
+        function deleteBooking(id) {
+            const index = bookings.findIndex(b => b.id === id);
+            bookings.splice(index, 1);
+            renderBookings();
+        }
+
+        function filterBookings() {
+            currentFilter = document.getElementById('status-filter').value;
+            currentPage = 1; // Reset to the first page
+            renderBookings();
+        }
+
+        function showSection(section) {
+            document.getElementById('booking-section').style.display = section === 'booking' ? 'block' : 'none';
+            document.getElementById('user-section').style.display = section === 'users' ? 'block' : 'none';
+        }
+
+        //renderBookings();
+        fetchBookings()
+        //renderUsers();
+    </script>
+</body>
+</html>

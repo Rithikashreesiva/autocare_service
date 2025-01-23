@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login & Register</title>
+    <style>
+        body {
+            background-image: url('images/login.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 300px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #007bff;
+        }
+
+        ;
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input,
+        select {
+            width: 80%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .btn {
+
+            padding: 10px 20px;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px auto 0;
+            /* Center the button horizontally and add some space from top */
+            display: block;
+            /* Ensure it's treated as a block element */
+        }
+
+        .btn:hover {
+            background: #0056b3;
+        }
+
+        .link {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .link a {
+            text-decoration: none;
+            color: #007bff;
+        }
+
+        .link a:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Login</h2>
+        <form id="login-form">
+            <div class="form-group">
+                <label for="role">Role</label>
+                <select id="role" name="role" required>
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="Enter your email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter your password" required>
+            </div>
+            <button type="button" class="btn" onclick="handleLogin()">Login</button>
+        </form>
+        <div class="link">
+            <p>Don't have an account? <a href="register.html">Register here</a></p>
+        </div>
+        <p class="error-message" id="error-message"></p>
+    </div>
+
+    <script>
+        // Predefined login credentials for demonstration
+        const validCredentials = [
+            { role: 'user', email: 'rithika@gmail.in', password: 'rithika2004' },
+            { role: 'admin', email: 'admin@autocare.in', password: 'admin123' }
+        ];
+
+        async function handleLogin() {
+            const role = document.getElementById('role').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('error-message');
+            try {
+                const BASE_URL = 'http://localhost:5000/api'
+                const response = await fetch(`${BASE_URL}/users/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password }),
+                });
+
+                if (response.ok) {
+                    const user = await response.json();
+                    if (user.role === role) {   
+                        // Store user data in localStorage for session management
+                        localStorage.setItem('user', JSON.stringify(user));     
+                        // Redirect based on role
+                        window.location.href = role === 'user' ? 'user_home.html' : 'admin_home.html';
+                    } else {
+                        errorMessage.textContent = 'Invalid role selected.';
+                    }
+                } else {
+                    const error = await response.json();
+                    errorMessage.textContent = error.message || 'Login failed.';
+                }
+            } catch (err) {
+                errorMessage.textContent = 'An error occurred. Please try again.';
+            }
+
+        }
+    </script>
+</body>
+
+</html>

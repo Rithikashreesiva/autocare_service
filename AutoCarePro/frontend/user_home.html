@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Screen</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+            background-image: url('images/home.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .navbar {
+            background-color: #007bff;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+
+        .navbar h1 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .profile-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .profile-popup {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 30px;
+            background: white;
+            color: black;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+
+        .profile-popup a {
+            display: block;
+            padding: 10px;
+            text-decoration: none;
+            color: #007bff;
+        }
+
+        .profile-popup a:hover {
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 800px;
+            margin: auto;
+            background: rgba(225, 225, 225, 0.8);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #007bff;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        table th,
+        table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        table th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input,
+        select {
+            width: 70%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="navbar">
+        <h1>Booking Management</h1>
+        <button class="profile-btn" onclick="toggleProfilePopup()">User Profile</button>
+        <div id="profile-popup" class="profile-popup">
+            <a href="profile.html" onclick="viewProfile()">My Profile</a>
+            <a href="login.html" onclick="logout()">Logout</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Booking Form -->
+        <div id="booking-form">
+            <h2>Create Booking</h2>
+            <div class="form-group">
+                <label for="vehicle-service">Vehicle Service</label>
+                <select id="vehicle-service" required>
+                    <option value="Oil Change">Oil Change</option>
+                    <option value="Tire Replacement">Tire Replacement</option>
+                    <option value="Engine Repair">Engine Repair</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="booking-time">Booking Time</label>
+                <input type="datetime-local" id="booking-time" required>
+            </div>
+            <input type="hidden" id="edit-booking-id">
+            <button class="btn" onclick="createBooking()">Submit</button>
+        </div>
+
+        <!-- Booking Table -->
+        <div id="booking-list">
+            <h2>All Bookings</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Service Type</th>
+                        <th>Booking Date</th>
+                        <th>Booking Time</th>
+                        <th>Booking Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="booking-table-body">
+                    <!-- Booking rows will appear here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:5000/api'
+
+        // Function to toggle the profile popup
+        function toggleProfilePopup() {
+            const popup = document.getElementById('profile-popup');
+            popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
+        }
+
+        // Function to view profile
+        function viewProfile() {
+            alert('Viewing profile...');
+        }
+
+        // Function to logout
+        function logout() {
+            alert('Logging out...');
+            window.location.href = 'login.html';
+        }
+        let myBookings = []
+
+        // Function to create a new booking
+        async function createBooking() {
+           //const username = document.getElementById('username').value;
+            const serviceType = document.getElementById('vehicle-service').value;
+            const bookingTime = document.getElementById('booking-time').value;
+            const bookingId = document.getElementById('edit-booking-id').value;
+
+
+            if ( !serviceType || !bookingTime) {
+                alert('Please fill out all fields.');
+                return;
+            }
+
+            const currentDate = new Date();
+            const bookingDate = new Date(bookingTime);
+
+            // Prevent past bookings
+            if (bookingDate < currentDate.setHours(0, 0, 0, 0)) {
+                alert('You cannot book services in the past.');
+                return;
+            }
+
+            // Count bookings for the selected date
+
+
+            // Limit bookings to 2 per day
+            fetchBookingCountByDate(bookingDate)
+            if (!bookingId) {
+                try {
+
+                    const response = await fetch(`${BASE_URL}/bookings`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            user: JSON.parse(localStorage.getItem('user'))._id,
+                            service: serviceType,
+                            date: bookingTime.split('T')[0],
+                            time: bookingTime.split('T')[1],
+                        }),
+                    });
+
+                    if (response.ok) {
+                        alert('Booking created successfully!');
+                        fetchBookings(); // Refresh bookings
+                    } else {
+                        alert('Failed to create booking.');
+                    }
+                } catch (err) {
+                    console.error('Error creating booking:', err);
+                }
+            } else {
+                try {
+
+                    const response = await fetch(`${BASE_URL}/bookings/${bookingId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            service: serviceType,
+                            date: bookingTime.split('T')[0],
+                            time: bookingTime.split('T')[1],
+                        }),
+                    });
+
+                    if (response.ok) {
+                        alert('Booking created successfully!');
+                        fetchBookings(); // Refresh bookings
+                    } else {
+                        alert('Failed to create booking.');
+                    }
+                } catch (err) {
+                    console.error('Error creating booking:', err);
+                }
+            }
+
+
+            // Clear form fields
+           document.getElementById('username').value = '';
+            document.getElementById('vehicle-service').value = '';
+            document.getElementById('booking-time').value = '';
+        }
+
+        async function fetchBookings() {
+            try {
+                const response = await fetch(`${BASE_URL}/bookings`);
+                if (response.ok) {
+                    const bookings = await response.json();
+                    userId = JSON.parse(localStorage.getItem('user'))._id,
+                    bookings.forEach(booking => {
+                        if(booking.user._id === userId) {
+                            myBookings.push(booking)
+                        }
+
+                    })
+                    renderBookings();
+                } else {
+                    alert('Failed to fetch bookings.');
+                }
+            } catch (err) {
+                console.error('Error fetching bookings:', err);
+            }
+        }
+
+        // Function to render all bookings
+        function renderBookings() {
+            const tableBody = document.getElementById('booking-table-body');
+            tableBody.innerHTML = '';
+
+            myBookings.forEach(booking => {
+                const row = document.createElement('tr');
+
+                row.innerHTML = `
+                    <td>${booking.user.name}</td>
+                    <td>${booking.service}</td>
+                    <td>${booking.date}</td>
+                    <td>${booking.time}</td>
+                    <td>
+                        <button class="btn" onclick="editBooking('${booking._id}')">Edit</button>
+                        <button class="btn" onclick="deleteBooking('${booking._id}')">Delete</button>
+                    </td>`;
+
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Function to delete a booking
+        async function deleteBooking(id) {
+            if (!confirm('Are you sure you want to delete this booking?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${BASE_URL}/bookings/${id}`, {
+            method: 'DELETE',
+        });
+
+        if (response.ok) {
+            alert('Booking deleted successfully!');
+            fetchBookings(); // Refresh the booking list
+        } else {
+            const error = await response.json();
+            alert(`Failed to delete booking: ${error.message}`);
+        }
+    } catch (err) {
+        console.error('Error deleting booking:', err);
+        alert('An error occurred while deleting the booking.');
+    }
+        }
+
+        // Function to edit a booking
+        function editBooking(id) {
+            const booking = myBookings.find(b => b._id === id);
+
+            if (booking) {
+                //document.getElementById('username').value = booking.user.name;
+                document.getElementById('vehicle-service').value = booking.service;
+                document.getElementById('booking-time').value = booking.date;
+                document.getElementById('edit-booking-id').value = id;
+            }
+        }
+
+        async function fetchBookingCountByDate(date) {
+            try {
+                const response = await fetch(`${BASE_URL}/bookings/count/date?date=${date}`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.count >= 2) {
+                        alert('Booking limit reached for this day. Please select another date.');
+                        return;
+                    }
+                } else {
+                    alert('Failed to fetch booking count.');
+                }
+            } catch (err) {
+                console.error('Error fetching booking count by date:', err);
+            }
+        }
+
+        // Initial render
+        fetchBookings();
+    </script>
+</body>
+
+</html>
